@@ -12,6 +12,12 @@ def init_db():
     db = db_setup.run(app.config['TESTING'])
 
 
+def delete_db():
+    global db
+    database.delete_db(db)
+    db = ''
+
+
 @app.route('/')
 def index():
     if not db:

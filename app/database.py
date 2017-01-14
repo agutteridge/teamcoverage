@@ -1,3 +1,4 @@
+import os
 import sqlite3
 
 
@@ -46,6 +47,13 @@ def get_tables(db):
     result = c.fetchall()
     conn.close()
     return _tuple_to_list(result, 1)
+
+
+def delete_db(db):
+    try:
+        os.remove(os.path.join(os.getcwd(), db))
+    except FileNotFoundError as err:
+        print(err)  # TODO: log error
 
 
 def _generate_question_marks(number):

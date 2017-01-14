@@ -2,7 +2,7 @@ import unittest
 from unittest import mock
 import sqlite3
 
-from app import db_setup
+from app import db_setup, database
 
 
 class SetupTest(unittest.TestCase):
@@ -13,9 +13,10 @@ class SetupTest(unittest.TestCase):
     def setUp(self):
         self.conn = sqlite3.connect(self.DB_NAME)
         self.c = self.conn.cursor()
-        self.c.execute('DROP TABLE IF EXISTS types;')
-        self.c.execute('DROP TABLE IF EXISTS dex;')
-        self.conn.commit()
+
+    def tearDown(self):
+        self.conn.close()
+        database.delete_db(self.DB_NAME)
 
     @mock.patch.multiple('app.db_setup',
                          generate_dex_table=mock.DEFAULT,

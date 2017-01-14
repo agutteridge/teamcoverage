@@ -10,6 +10,9 @@ class FlaskrTestCase(unittest.TestCase):
         self.app = main.app.test_client()
         main.init_db()
 
+    def tearDown(self):
+        main.delete_db()
+
     def testIndex(self):
         rv = self.app.get('/')
         self.assertEqual(rv.mimetype, 'text/html')
