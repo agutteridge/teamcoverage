@@ -1,6 +1,4 @@
-import os
 import unittest
-import tempfile
 
 from app import main
 
@@ -8,20 +6,24 @@ from app import main
 class FlaskrTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.db_fd, main.app.config['DATABASE'] = tempfile.mkstemp()
         main.app.config['TESTING'] = True
         self.app = main.app.test_client()
-        with main.app.app_context():
-            main.init_db()
+        main.init_db()
 
-    def tearDown(self):
-        os.close(self.db_fd)
-        os.unlink(main.app.config['DATABASE'])
-
-    def testHelloWorld(self):
+    def testIndex(self):
         rv = self.app.get('/')
         self.assertEqual(rv.mimetype, 'text/html')
-        self.assertEqual(rv.data, b'Hello, World!')
+        self.assertIn(b'Scissors', rv.data)
+
+    def testResults(self):
+        rv = self.app.get(
+            '/results?poke1=Scissorsmon&poke2=Papermon&poke3=Combomon')
+        self.assertEqual(rv.mimetype, 'text/html')
+        self.assertEqual(
+            b"[('Combomon', 'Paper', 'Scissors'), " +
+            b"('Papermon', 'Paper', ''), " +
+            b"('Scissorsmon', 'Scissors', '')]", rv.data)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,52 +1,45 @@
-import sqlite3
 import ijson
 
+from app import database
+from app import config
 
-def generate_type_table():
+
+def generate_types_table(db):
     print('Building Type table...')
-    conn = sqlite3.connect('pokemondata.db')
-    c = conn.cursor()
-    c.execute(
-        '''CREATE TABLE types(
-           Name TEXT PRIMARY KEY,
-           Bug REAL, Dark REAL, Dragon REAL, Electric REAL, Fairy REAL,
-           Fighting REAL, Fire REAL, Flying REAL, Ghost REAL, Grass REAL,
-           Ground REAL, Ice REAL, Normal REAL, Poison REAL, Psychic REAL,
-           Rock REAL, Steel REAL, Water REAL);'''
-    )
-    conn.commit()
+    created = False
 
-    f = open('./resources/types.txt', 'rb')
+    if 'test' in db:  # ensure db name does not contain 'test'!
+        f = open('./resources/test_types.txt', 'rb')
+    else:
+        f = open('./resources/types.txt', 'rb')
+
     types = ijson.items(f, 'types.item')
 
     for t in types:
         # Ensure types are in alphabetical order
-        sorted_list = sorted(t['atk_effectives'], key=lambda l: l[0])
-        _, values = zip(*sorted_list)
+        sorted_types = sorted(t['atk_effectives'], key=lambda l: l[0])
+        names, values = zip(*sorted_types)
+
+        if not created:
+            with_datatypes = list(map(lambda t: (t, 'REAL'), names))
+            database.create_table(db, 'types', with_datatypes)
+            created = True
+
         float_values = tuple(map(lambda x: float(x), values))
         col_values = (t['name'],) + float_values
-        c.execute(
-            '''INSERT INTO types VALUES
-               (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);''' % locals(),
-            col_values)
-        conn.commit()
-
-    conn.close()
+        database.insert(db, 'types', col_values)
 
 
-def generate_dex_table():
+def generate_dex_table(db):
     print('Building Dex table...')
-    conn = sqlite3.connect('pokemondata.db')
-    c = conn.cursor()
-    c.execute(
-        '''CREATE TABLE dex(
-           Name TEXT PRIMARY KEY,
-           Type1 TEXT, Type2 TEXT);'''
-    )
-    conn.commit()
+    cols = [('Type1', 'TEXT'), ('Type2', 'TEXT')]
+    database.create_table(db, 'dex', cols)
 
     # Large JSON file; use stream
-    stream = ijson.parse(open('./resources/pokemon.txt', 'rb'))
+    if 'test' in db:  # ensure db name does not contain 'test'!
+        stream = ijson.parse(open('./resources/test_pokemon.txt', 'rb'))
+    else:
+        stream = ijson.parse(open('./resources/pokemon.txt', 'rb'))
 
     poke_name = ''
     alts_list = []  # List of lists for alternative forms
@@ -70,33 +63,23 @@ def generate_dex_table():
 
         if (prefix, event) == ('pokemon.item', 'end_map'):
             for alt in alts_list:
-                c.execute(
-                    '''INSERT INTO dex VALUES
-                       (?,?,?);''' % locals(),
-                    tuple(alt))
-                conn.commit()
+                database.insert(db, 'dex', tuple(alt))
 
             # Reset values
             poke_name = ''
             alts_list = []
 
-    conn.close()
 
-
-def run():
-    conn = sqlite3.connect('pokemondata.db')
-    c = conn.cursor()
-    c.execute("SELECT * FROM sqlite_master WHERE type='table';")
-    tables = c.fetchall()
-    if not tables:
-        generate_type_table()
-        generate_dex_table()
+def run(testing):
+    if testing:
+        current_db = config.TEST_DB
     else:
-        if 'types' not in tables[0]:
-            generate_type_table()
-        if 'dex' not in tables[0]:
-            generate_dex_table()
+        current_db = config.DEPLOY_DB
 
+    tables = database.get_tables(current_db)
+    if 'types' not in tables:
+        generate_types_table(current_db)
+    if 'dex' not in tables:
+        generate_dex_table(current_db)
 
-if __name__ == '__main__':
-    run()
+    return(current_db)

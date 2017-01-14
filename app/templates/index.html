@@ -1,0 +1,16 @@
+<html>
+  {% for n in range(1, 7) %}
+  Pokémon {{ n }}: 
+  <select name="poke{{ n }}" form="teamForm">
+    <option value="Empty" selected disabled>--Empty--</option>
+    {% for poke in all_pokes %}
+    <option value="{{ poke }}">{{ poke }}</option>
+    {% endfor %}
+  </select>
+  <br>
+  {% endfor %}
+  <br>
+  <form action="results" id="teamForm">
+    <input type="submit" value="Submit">
+  </form>
+</html>

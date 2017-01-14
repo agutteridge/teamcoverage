@@ -1,7 +1,8 @@
-.DS_Store
-venv/
 resources/*
 !resources/test_*
+config.py
+.DS_Store
+venv/
 *.db
 *pokemondata*
 *.swp
