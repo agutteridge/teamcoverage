@@ -1,6 +1,5 @@
 resources/*
 !resources/test_*
-config.py
 .DS_Store
 venv/
 *.db
