@@ -24,7 +24,7 @@ class SetupTest(unittest.TestCase):
     def testRun(self,
                 generate_dex_table,
                 generate_types_table):
-        db_setup.run(self.DB_NAME)
+        db_setup.run(True)
         generate_dex_table.assert_called_once()
         generate_types_table.assert_called_once()
 
