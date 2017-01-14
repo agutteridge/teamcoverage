@@ -51,7 +51,7 @@ def get_tables(db):
 
 def delete_db(db):
     try:
-        os.remove(os.path.join(os.getcwd(), db))
+        os.remove(os.path.join(os.environ['PWD'], db))
     except FileNotFoundError as err:
         print(err)  # TODO: log error
 
