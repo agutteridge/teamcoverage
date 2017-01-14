@@ -1,6 +1,7 @@
 .DS_Store
 venv/
-resources/
+resources/*
+!resources/test_*
 *.db
 *pokemondata*
 *.swp

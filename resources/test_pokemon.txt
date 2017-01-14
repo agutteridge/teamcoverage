@@ -1,0 +1,4 @@
+{"pokemon":[
+{"name":"Papermon","alts":[{"suffix":"","types":["Paper"]}]},
+{"name":"Scissorsmon","alts":[{"suffix":"","types":["Scissors"]}]},
+{"name":"Combomon","alts":[{"suffix":"","types":["Paper", "Scissors"]}]}]}
