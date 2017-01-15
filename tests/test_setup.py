@@ -1,5 +1,4 @@
 import unittest
-from unittest import mock
 import sqlite3
 
 from app import db_setup, database
@@ -18,23 +17,13 @@ class SetupTest(unittest.TestCase):
         self.conn.close()
         database.delete_db(self.DB_NAME)
 
-    @mock.patch.multiple('app.db_setup',
-                         generate_dex_table=mock.DEFAULT,
-                         generate_types_table=mock.DEFAULT)
-    def testRun(self,
-                generate_dex_table,
-                generate_types_table):
+    def testRun(self):
         db_setup.run(True)
-        generate_dex_table.assert_called_once()
-        generate_types_table.assert_called_once()
-
-    def testGenerateTypesTable(self):
-        db_setup.generate_types_table(self.DB_NAME)
         self.c.execute("SELECT Paper FROM types WHERE Name='Scissors';")
         self.assertEqual(self.c.fetchone()[0], 2.0)
+        self.c.execute("SELECT Paper FROM types WHERE Name='Paper_Scissors';")
+        self.assertEqual(self.c.fetchone()[0], 0.5)
 
-    def testGenerateDexTable(self):
-        db_setup.generate_dex_table(self.DB_NAME)
         self.c.execute("SELECT type1,type2 FROM dex WHERE Name='Papermon';")
         self.assertEqual(self.c.fetchone(), ('Paper', '',))
         self.c.execute("SELECT type1,type2 FROM dex WHERE Name='Scissorsmon';")

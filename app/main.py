@@ -22,7 +22,7 @@ def delete_db():
 def index():
     if not db:
         init_db()
-    all_pokes = database.get_all_pokes(db)
+    all_pokes = database.get_all_names(db, 'dex')
     return render_template('index.html', all_pokes=all_pokes)
 
 
@@ -31,10 +31,12 @@ def results():
     if not db:
         init_db()
     pokes = parse_request(request.args)
-    all_data = database.get_types(db, pokes)
-    # values = calculator.run(all_data)
-    # TODO: write strength/weakness calculator
-    return str(all_data)
+    poke_data = database.get_types(db, pokes)
+    all_data = {}  # Dict of all types, each element is a 6x4 2d tuple
+    # Top level: all possible types (dict key) and final score (float)
+    # Second level: poke 1-6 types (dict key)
+    # Third level: results (tuple) 4 indiv. values
+    return str(poke_data)
 
 
 def parse_request(args):

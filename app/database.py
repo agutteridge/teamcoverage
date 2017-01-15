@@ -2,9 +2,9 @@ import os
 import sqlite3
 
 
-def get_all_pokes(db):
+def get_all_names(db, name):
     conn, c = _conn_cursor(db)
-    c.execute('SELECT Name FROM dex;')
+    c.execute('SELECT Name FROM %(name)s;' % locals())
     result = _tuple_to_list(c.fetchall(), 0)
     conn.close()
     return result
@@ -22,6 +22,21 @@ def get_types(db, pokes):
     return result
 
 
+def get_type_combos(db):
+    conn, c = _conn_cursor(db)
+    c.execute('''SELECT Type1, Type2
+                 FROM dex
+                 WHERE (Type1 <> '' AND Type2 <> '')
+                 GROUP BY Type1, Type2;''')
+    result = c.fetchall()
+    conn.close()
+    return result
+
+
+def _change_zero(score_list):
+    return list(map(lambda e: 0.125 if e == 0 else e, score_list))
+
+
 def create_table(db, name, columns_datatypes):
     type_str = ', '.join(
         list(map(lambda t: t[0] + ' ' + t[1], columns_datatypes))
@@ -33,10 +48,15 @@ def create_table(db, name, columns_datatypes):
     conn.close()
 
 
-def insert(db, name, col_values):
+def insert(db, name, col_values, many=False):
     conn, c = _conn_cursor(db)
-    qm = _generate_question_marks(len(col_values))
-    c.execute('INSERT INTO %(name)s VALUES %(qm)s;' % locals(), col_values)
+    if many:
+        qm = _generate_question_marks(len(col_values[0]))
+        c.executemany('INSERT INTO %(name)s VALUES %(qm)s;' % locals(),
+                      col_values)
+    else:
+        qm = _generate_question_marks(len(col_values))
+        c.execute('INSERT INTO %(name)s VALUES %(qm)s;' % locals(), col_values)
     conn.commit()
     conn.close()
 
@@ -53,6 +73,12 @@ def delete_db(db):
     try:
         os.remove(os.path.join(os.environ['PWD'], db))
     except FileNotFoundError as err:
+        conn, c = _conn_cursor(db)
+        c.execute('DROP TABLE IF EXISTS dex;')
+        c.execute('DROP TABLE IF EXISTS types;')
+        c.execute('DROP TABLE IF EXISTS damage;')
+        conn.commit()
+        conn.close()
         print(err)  # TODO: log error
 
 

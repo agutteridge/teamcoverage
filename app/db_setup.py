@@ -6,7 +6,6 @@ from app import config
 
 def generate_types_table(db):
     print('Building Type table...')
-    created = False
 
     if 'test' in db:  # ensure db name does not contain 'test'!
         f = open('./resources/test_types.txt', 'rb')
@@ -15,34 +14,48 @@ def generate_types_table(db):
 
     types = ijson.items(f, 'types.item')
 
+    data = {}
     for t in types:
-        # Ensure types are in alphabetical order
-        sorted_types = sorted(t['atk_effectives'], key=lambda l: l[0])
-        names, values = zip(*sorted_types)
+        data[t['name']] = {}
+        for score in t['atk_effectives']:
+            data[t['name']][score[0]] = float(score[1])
 
-        if not created:
-            with_datatypes = list(map(lambda t: (t, 'REAL'), names))
-            database.create_table(db, 'types', with_datatypes)
-            created = True
+    type_names = sorted(data.keys())
+    cols = list(map(lambda t: (t, 'REAL'), type_names))
+    database.create_table(db, 'types', cols)
 
-        float_values = tuple(map(lambda x: float(x), values))
-        col_values = (t['name'],) + float_values
-        database.insert(db, 'types', col_values)
+    all_combos = database.get_type_combos(db)
+    for c in all_combos:
+        combo = c[0] + '_' + c[1]
+        data[combo] = {}
+        for t in type_names:
+            data[combo][t] = float(data[t][c[0]] * data[t][c[1]])
+
+    data_list = list(map(
+        lambda e: tuple([e[0]] + list(e[1].values())),
+        data.items()
+    ))
+
+    database.insert(db, 'types', data_list, many=True)
 
 
 def generate_dex_table(db):
+    def batch_insert(data_list):
+        list_of_tuples = list(map(lambda l: tuple(l), data_list))
+        database.insert(db, 'dex', list_of_tuples, many=True)
+
     print('Building Dex table...')
     cols = [('Type1', 'TEXT'), ('Type2', 'TEXT')]
     database.create_table(db, 'dex', cols)
 
     # Large JSON file; use stream
-    if 'test' in db:  # ensure db name does not contain 'test'!
+    if 'test' in db:
         stream = ijson.parse(open('./resources/test_pokemon.txt', 'rb'))
     else:
         stream = ijson.parse(open('./resources/pokemon.txt', 'rb'))
 
     poke_name = ''
-    alts_list = []  # List of lists for alternative forms
+    data_list = []
     for prefix, event, value in stream:
         if (prefix, event) == ('pokemon.item.name', 'string'):
             poke_name = value
@@ -50,9 +63,9 @@ def generate_dex_table(db):
             data = [poke_name, '', '']
             if value:
                 data[0] = poke_name + '-' + value
-            alts_list.append(data)
+            data_list.append(data)
         if (prefix, event) == ('pokemon.item.alts.item.types.item', 'string'):
-            current_data = alts_list[-1]
+            current_data = data_list[-1]
             if not current_data[1]:
                 current_data[1] = value
             elif not current_data[2]:
@@ -62,12 +75,12 @@ def generate_dex_table(db):
                 raise
 
         if (prefix, event) == ('pokemon.item', 'end_map'):
-            for alt in alts_list:
-                database.insert(db, 'dex', tuple(alt))
-
-            # Reset values
+            if len(data_list) > 100:  # Insert batches of ~100
+                batch_insert(data_list)
+                data_list = []
             poke_name = ''
-            alts_list = []
+    if data_list:
+        batch_insert(data_list)
 
 
 def run(testing):
@@ -77,9 +90,9 @@ def run(testing):
         current_db = config.DEPLOY_DB
 
     tables = database.get_tables(current_db)
-    if 'types' not in tables:
-        generate_types_table(current_db)
     if 'dex' not in tables:
         generate_dex_table(current_db)
+    if 'types' not in tables:
+        generate_types_table(current_db)
 
     return(current_db)
