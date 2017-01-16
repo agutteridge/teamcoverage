@@ -1,7 +1,7 @@
 import ijson
 
+import config
 from app import database
-from app import config
 
 
 def generate_types_table(db):

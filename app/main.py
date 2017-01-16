@@ -4,34 +4,31 @@ from app import db_setup, database
 
 
 app = Flask(__name__)
-db = ''
-
+app.config.from_object('config')
 
 def init_db():
-    global db
-    db = db_setup.run(app.config['TESTING'])
+    app.config['DATABASE'] = db_setup.run(app.config['TESTING'])
 
 
 def delete_db():
-    global db
-    database.delete_db(db)
-    db = ''
+    database.delete_db(app.config['DATABASE'])
+    app.config['DATABASE'] = ''
 
 
 @app.route('/')
 def index():
-    if not db:
+    if not app.config['DATABASE']:
         init_db()
-    all_pokes = database.get_all_names(db, 'dex')
+    all_pokes = database.get_all_names(app.config['DATABASE'], 'dex')
     return render_template('index.html', all_pokes=all_pokes)
 
 
 @app.route('/results')
 def results():
-    if not db:
+    if not app.config['DATABASE']:
         init_db()
     pokes = parse_request(request.args)
-    poke_data = database.get_types(db, pokes)
+    poke_data = database.get_types(app.config['DATABASE'], pokes)
     all_data = {}  # Dict of all types, each element is a 6x4 2d tuple
     # Top level: all possible types (dict key) and final score (float)
     # Second level: poke 1-6 types (dict key)
