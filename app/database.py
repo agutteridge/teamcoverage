@@ -1,36 +1,44 @@
 import os
 import sqlite3
+from contextlib import contextmanager
+
+
+@contextmanager
+def loan(db):
+    conn = sqlite3.connect(db)
+    try:
+        yield {'conn': conn, 'c': conn.cursor()}
+    finally:
+        conn.close()
 
 
 def get_all_names(db, name):
-    conn, c = _conn_cursor(db)
-    c.execute('SELECT Name FROM %(name)s;' % locals())
-    result = _tuple_to_list(c.fetchall(), 0)
-    conn.close()
-    return result
+    with loan(db) as ldb:
+        ldb['c'].execute('SELECT Name FROM %(name)s;' % locals())
+        result = _tuple_to_list(ldb['c'].fetchall(), 0)
+        return result
 
 
 def get_types(db, pokes):
-    conn, c = _conn_cursor(db)
     qm = _generate_question_marks(len(pokes))
-    c.execute(
-        'SELECT * FROM dex WHERE Name IN %(qm)s;' % locals(),
-        pokes
-    )
-    result = c.fetchall()
-    conn.close()
-    return result
+    with loan(db) as ldb:
+        ldb['c'].execute(
+            'SELECT * FROM dex WHERE Name IN %(qm)s;' % locals(),
+            pokes
+        )
+        result = ldb['c'].fetchall()
+        return result
 
 
 def get_type_combos(db):
-    conn, c = _conn_cursor(db)
-    c.execute('''SELECT Type1, Type2
-                 FROM dex
-                 WHERE (Type1 <> '' AND Type2 <> '')
-                 GROUP BY Type1, Type2;''')
-    result = c.fetchall()
-    conn.close()
-    return result
+    with loan(db) as ldb:
+        ldb['c'].execute(
+            '''SELECT Type1, Type2
+               FROM dex
+               WHERE (Type1 <> '' AND Type2 <> '')
+               GROUP BY Type1, Type2;''')
+        result = ldb['c'].fetchall()
+        return result
 
 
 def _change_zero(score_list):
@@ -41,45 +49,45 @@ def create_table(db, name, columns_datatypes):
     type_str = ', '.join(
         list(map(lambda t: t[0] + ' ' + t[1], columns_datatypes))
     )
-    conn, c = _conn_cursor(db)
-    c.execute('CREATE TABLE %(name)s(Name TEXT PRIMARY KEY, %(type_str)s);' %
-              locals())
-    conn.commit()
-    conn.close()
+    with loan(db) as ldb:
+        ldb['c'].execute(
+            'CREATE TABLE %(name)s(Name TEXT PRIMARY KEY, %(type_str)s);' %
+            locals())
+        ldb['conn'].commit()
 
 
 def insert(db, name, col_values, many=False):
-    conn, c = _conn_cursor(db)
-    if many:
-        qm = _generate_question_marks(len(col_values[0]))
-        c.executemany('INSERT INTO %(name)s VALUES %(qm)s;' % locals(),
-                      col_values)
-    else:
-        qm = _generate_question_marks(len(col_values))
-        c.execute('INSERT INTO %(name)s VALUES %(qm)s;' % locals(), col_values)
-    conn.commit()
-    conn.close()
+    with loan(db) as ldb:
+        if many:
+            qm = _generate_question_marks(len(col_values[0]))
+            ldb['c'].executemany(
+                'INSERT INTO %(name)s VALUES %(qm)s;' % locals(),
+                col_values)
+        else:
+            qm = _generate_question_marks(len(col_values))
+            ldb['c'].execute(
+                'INSERT INTO %(name)s VALUES %(qm)s;' % locals(),
+                col_values)
+        ldb['conn'].commit()
 
 
 def get_tables(db):
-    conn, c = _conn_cursor(db)
-    c.execute("SELECT * FROM sqlite_master WHERE type='table';")
-    result = c.fetchall()
-    conn.close()
-    return _tuple_to_list(result, 1)
+    with loan(db) as ldb:
+        ldb['c'].execute("SELECT * FROM sqlite_master WHERE type='table';")
+        result = ldb['c'].fetchall()
+        return _tuple_to_list(result, 1)
 
 
 def delete_db(db):
     try:
         os.remove(os.path.join(os.environ['PWD'], db))
     except FileNotFoundError as err:
-        conn, c = _conn_cursor(db)
-        c.execute('DROP TABLE IF EXISTS dex;')
-        c.execute('DROP TABLE IF EXISTS types;')
-        c.execute('DROP TABLE IF EXISTS damage;')
-        conn.commit()
-        conn.close()
-        print(err)  # TODO: log error
+        with loan(db) as ldb:
+            ldb['c'].execute('DROP TABLE IF EXISTS dex;')
+            ldb['c'].execute('DROP TABLE IF EXISTS types;')
+            ldb['c'].execute('DROP TABLE IF EXISTS damage;')
+            ldb['conn'].commit()
+            print(err)  # TODO: log error
 
 
 def _generate_question_marks(number):
@@ -89,8 +97,3 @@ def _generate_question_marks(number):
 
 def _tuple_to_list(tups, index):
     return list(map(lambda t: t[index], tups))
-
-
-def _conn_cursor(db):
-    conn = sqlite3.connect(db)
-    return conn, conn.cursor()
