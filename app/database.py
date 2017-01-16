@@ -14,7 +14,7 @@ def loan(db):
 
 def get_all_names(db, name):
     with loan(db) as ldb:
-        ldb['c'].execute('SELECT Name FROM %(name)s;' % locals())
+        ldb['c'].execute(f'SELECT Name FROM {name};')
         result = _tuple_to_list(ldb['c'].fetchall(), 0)
         return result
 
@@ -22,10 +22,8 @@ def get_all_names(db, name):
 def get_types(db, pokes):
     qm = _generate_question_marks(len(pokes))
     with loan(db) as ldb:
-        ldb['c'].execute(
-            'SELECT * FROM dex WHERE Name IN %(qm)s;' % locals(),
-            pokes
-        )
+        query = f'SELECT * FROM dex WHERE Name IN {qm};'
+        ldb['c'].execute(query, pokes)
         result = ldb['c'].fetchall()
         return result
 
@@ -33,8 +31,7 @@ def get_types(db, pokes):
 def get_type_combos(db):
     with loan(db) as ldb:
         ldb['c'].execute(
-            '''SELECT Type1, Type2
-               FROM dex
+            '''SELECT Type1, Type2 FROM dex
                WHERE (Type1 <> '' AND Type2 <> '')
                GROUP BY Type1, Type2;''')
         result = ldb['c'].fetchall()
@@ -51,8 +48,7 @@ def create_table(db, name, columns_datatypes):
     )
     with loan(db) as ldb:
         ldb['c'].execute(
-            'CREATE TABLE %(name)s(Name TEXT PRIMARY KEY, %(type_str)s);' %
-            locals())
+            f'CREATE TABLE {name}(Name TEXT PRIMARY KEY, {type_str});')
         ldb['conn'].commit()
 
 
@@ -60,14 +56,12 @@ def insert(db, name, col_values, many=False):
     with loan(db) as ldb:
         if many:
             qm = _generate_question_marks(len(col_values[0]))
-            ldb['c'].executemany(
-                'INSERT INTO %(name)s VALUES %(qm)s;' % locals(),
-                col_values)
+            query = f'INSERT INTO {name} VALUES {qm};'
+            ldb['c'].executemany(query, col_values)
         else:
             qm = _generate_question_marks(len(col_values))
-            ldb['c'].execute(
-                'INSERT INTO %(name)s VALUES %(qm)s;' % locals(),
-                col_values)
+            query = f'INSERT INTO {name} VALUES {qm};'
+            ldb['c'].execute(query, col_values)
         ldb['conn'].commit()
 
 

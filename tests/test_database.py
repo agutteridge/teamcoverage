@@ -1,8 +1,7 @@
 import unittest
-from unittest import mock
 import sqlite3
 
-from app import db_setup, database
+from app import database
 
 
 class SetupTest(unittest.TestCase):
@@ -21,7 +20,10 @@ class SetupTest(unittest.TestCase):
     def testInsert(self):
         cols = [('First', 'TEXT'), ('Second', 'REAL')]
         database.create_table(self.DB_NAME, 'test', cols)
-        database.insert(self.DB_NAME, 'test', ('myname', 'hello', 5.2))
+        data = ('myname', 'hello', 5.2)
+        database.insert(self.DB_NAME, 'test', data)
+        self.c.execute('SELECT * FROM test;')
+        self.assertEqual(self.c.fetchall()[0], data)
 
     def testInsertMany(self):
         cols = [('First', 'TEXT'), ('Second', 'REAL')]
@@ -32,3 +34,5 @@ class SetupTest(unittest.TestCase):
             ('nambo', 'water', 77.2)
         ]
         database.insert(self.DB_NAME, 'test', data, many=True)
+        self.c.execute('SELECT * FROM test;')
+        self.assertEqual(self.c.fetchall(), data)
