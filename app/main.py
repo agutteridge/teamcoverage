@@ -1,12 +1,14 @@
 from flask import Flask, render_template, request
 
-from app import db_setup, database
+from app import database, calc
 
 
 app = Flask(__name__)
 app.config.from_object('config')
 
+
 def init_db():
+    from app import db_setup
     app.config['DATABASE'] = db_setup.run(app.config['TESTING'])
 
 
@@ -29,11 +31,8 @@ def results():
         init_db()
     pokes = parse_request(request.args)
     poke_data = database.get_types(app.config['DATABASE'], pokes)
-    all_data = {}  # Dict of all types, each element is a 6x4 2d tuple
-    # Top level: all possible types (dict key) and final score (float)
-    # Second level: poke 1-6 types (dict key)
-    # Third level: results (tuple) 4 indiv. values
-    return str(poke_data)
+    results = calc.run_inefficient(app.config['DATABASE'], poke_data)
+    return str(list(map(lambda l: l[0:2], sorted(results))))
 
 
 def parse_request(args):

@@ -23,9 +23,9 @@ class FlaskrTestCase(unittest.TestCase):
             '/results?poke1=Scissorsmon&poke2=Papermon&poke3=Combomon')
         self.assertEqual(rv.mimetype, 'text/html')
         self.assertEqual(
-            b"[('Combomon', 'Paper', 'Scissors'), " +
-            b"('Papermon', 'Paper', ''), " +
-            b"('Scissorsmon', 'Scissors', '')]", rv.data)
+            b"[[1.75, 'Scissors'], " +
+            b"[3.25, 'Paper_Scissors'], " +
+            b"[9.0, 'Paper']]", rv.data)
 
 
 if __name__ == '__main__':
