@@ -1,7 +1,7 @@
 import unittest
 import sqlite3
 
-from app import database
+from app import database, db_setup
 
 
 class SetupTest(unittest.TestCase):
@@ -36,3 +36,10 @@ class SetupTest(unittest.TestCase):
         database.insert(self.DB_NAME, 'test', data, many=True)
         self.c.execute('SELECT * FROM test;')
         self.assertEqual(self.c.fetchall(), data)
+
+    def testDamage(self):
+        db_setup.run(True)
+        result = database.get_damage(self.DB_NAME, 'Scissors', 'Paper')
+        self.assertEqual(result, 2.0)
+        result = database.get_damage(self.DB_NAME, 'Paper', 'Paper_Scissors')
+        self.assertEqual(result, 0.5)

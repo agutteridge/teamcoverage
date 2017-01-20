@@ -13,12 +13,11 @@ def generate_types_table(db):
         f = open('./resources/types.txt', 'rb')
 
     types = ijson.items(f, 'types.item')
-
     data = {}
     for t in types:
-        data[t['name']] = {}
         for score in t['atk_effectives']:
-            data[t['name']][score[0]] = float(score[1])
+            data.setdefault(score[0], {})
+            data[score[0]][t['name']] = float(score[1])
 
     type_names = sorted(data.keys())
     cols = list(map(lambda t: (t, 'REAL'), type_names))
@@ -29,7 +28,7 @@ def generate_types_table(db):
         combo = c[0] + '_' + c[1]
         data[combo] = {}
         for t in type_names:
-            data[combo][t] = float(data[t][c[0]] * data[t][c[1]])
+            data[combo][t] = float(data[c[0]][t] * data[c[1]][t])
 
     data_list = list(map(
         lambda e: tuple([e[0]] + list(e[1].values())),

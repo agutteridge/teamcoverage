@@ -19,7 +19,7 @@ class SetupTest(unittest.TestCase):
 
     def testRun(self):
         db_setup.run(True)
-        self.c.execute("SELECT Paper FROM types WHERE Name='Scissors';")
+        self.c.execute("SELECT Scissors FROM types WHERE Name='Paper';")
         self.assertEqual(self.c.fetchone()[0], 2.0)
         self.c.execute("SELECT Paper FROM types WHERE Name='Paper_Scissors';")
         self.assertEqual(self.c.fetchone()[0], 0.5)
