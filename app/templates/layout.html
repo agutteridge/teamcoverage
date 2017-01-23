@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Team Coverage</title>
+  <meta name="description" content="See which type combinations your team is weakest against!">
+  <meta name="author" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/Skeleton/normalize.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/Skeleton/skeleton.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="icon" type="image/png" href="images/favicon.png">
+</head>
+
+<body>
+  <div class="container">
+    <section class="header">
+      <h1 class="title">Analyse your team's weaknesses!</h1>
+    </section>
+  </div>
+  <div class="container">
+    <div class="row" id=toprow>
+      {% block top %}{% endblock %}
+    </div>
+    <div class="row" id=bodyrow>
+      {% block body %}{% endblock %}
+    </div>
+  </div>
+</body>
+</html>

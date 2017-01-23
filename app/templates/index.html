@@ -1,16 +1,24 @@
-<html>
+{% extends "layout.html" %}
+{% block top %}
+  <section class="toprow">
+  <div class="row">
   {% for n in range(1, 7) %}
-  Pokémon {{ n }}: 
-  <select name="poke{{ n }}" form="teamForm">
-    <option value="Empty" selected disabled>--Empty--</option>
-    {% for poke in all_pokes %}
-    <option value="{{ poke }}">{{ poke }}</option>
-    {% endfor %}
-  </select>
-  <br>
+  {% if n == 4 %}
+    </div>
+    <div class="row">
+  {% endif %}
+    <div class="four columns">
+    <select name="poke{{ n }}" form="teamForm">
+      <option value="Empty" selected>Pokémon {{ n }}</option>
+      {% for poke in all_pokes %}
+      <option value="{{ poke }}">{{ poke }}</option>
+      {% endfor %}
+    </select>
+    </div>
   {% endfor %}
-  <br>
+  </div>
   <form action="results" id="teamForm">
     <input type="submit" value="Submit">
   </form>
-</html>
+  </section>
+{% endblock %}
