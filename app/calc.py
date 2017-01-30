@@ -2,7 +2,7 @@ from app import database
 
 
 def run_inefficient(db, team):
-    all_types = database.get_all_names(db, 'types')
+    all_types = database.get_row_names(db, 'types')
 
     results = []
     for enemy_type in all_types:  # each possible enemy type

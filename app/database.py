@@ -11,7 +11,7 @@ def loan(db):
         conn.close()
 
 
-def get_all_names(db, name):
+def get_row_names(db, name):
     with loan(db) as ldb:
         ldb['c'].execute(f'SELECT Name FROM {name};')
         return _tuple_to_list(ldb['c'].fetchall(), 0)
@@ -23,6 +23,24 @@ def get_damage(db, attk, defend):
         result = ldb['c'].fetchone()[0]
         if result == 0:
             result = 0.125
+        return result
+
+
+def get_row(db, name):
+    with loan(db) as ldb:
+        ldb['c'].execute(f'SELECT * FROM types WHERE Name=?;', (name,))
+        result = ldb['c'].fetchall()[0]
+        return result
+
+
+def get_type_names(db):
+    with loan(db) as ldb:
+        ldb['c'].execute(
+            '''SELECT sql FROM sqlite_master
+               WHERE tbl_name = 'types';''')
+        table_str = ldb['c'].fetchall()[0][0]
+        import re
+        result = re.sub(r' REAL', r'', table_str).strip(')').split(', ')[1:]
         return result
 
 

@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block body %}
+<h2>{{ data.type_name }}</h2>
+
+Weak to:<br>
+{% for t in data.damage %}
+  {% if t[1] > 1 %}
+  {{ t[0] ~ ' ' ~ t[1] ~ 'x' }}<br>
+  {% endif %}
+{% endfor %}
+<br>
+Resistant to:<br>
+{% for t in data.damage %}
+{% if t[1] < 1 and t[1] > 0 %}
+  {{ t[0] ~ ' ' ~ t[1] ~ 'x' }}<br>
+  {% endif %}
+{% endfor %}
+<br>
+Immune to:<br>
+{% for t in data.damage %}
+  {% if t[1] == 0 %}
+  {{ t[0] ~ ' ' ~ t[1] ~ 'x' }}<br>
+  {% endif %}
+{% endfor %}
+<br>
+Damaged normally by: <br>
+{% for t in data.damage %}
+  {% if t[1] == 1 %}
+  {{ t[0] ~ ' ' ~ t[1] ~ 'x' }}<br>
+  {% endif %}
+{% endfor %}
+<br>
+{% endblock %}
